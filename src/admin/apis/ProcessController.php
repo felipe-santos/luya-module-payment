@@ -2,7 +2,12 @@
 
 namespace luya\payment\admin\apis;
 
+use luya\payment\base\PayModel;
 use luya\payment\models\Process;
+use luya\payment\Pay;
+use luya\payment\transactions\PayPalTransaction;
+use luya\payment\transactions\TPayTransaction;
+use luya\payment\widgets\BankSelection;
 use yii\web\ForbiddenHttpException;
 
 /**

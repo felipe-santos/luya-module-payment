@@ -122,7 +122,7 @@ class Process extends NgRestModel
             'salt' => Yii::t('app', 'Salt'),
             'hash' => Yii::t('app', 'Hash'),
             'random_key' => Yii::t('app', 'Random Key'),
-            'amount' => Yii::t('app', 'Amount'),
+            'amount' => Yii::t('app', 'Cod'),
             'currency' => Yii::t('app', 'Currency'),
             'order_id' => Yii::t('app', 'Order ID'),
             'success_link' => Yii::t('app', 'Success Link'),

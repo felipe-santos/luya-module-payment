@@ -42,7 +42,7 @@ class PayPalTransaction extends Transaction
     public $mode = self::MODE_LIVE;
     
     /**
-     * @var string The PayPal interface displays a name for the Amount of the ordering, this is the product text.
+     * @var string The PayPal interface displays a name for the Cod of the ordering, this is the product text.
      */
     public $productDescription;
     

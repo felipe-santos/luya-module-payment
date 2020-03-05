@@ -197,6 +197,7 @@ class PayModel extends Model
      * This method is used to retrieve the link for dispatching to the requested url.
      *
      * @return string
+     * @throws PaymentException
      */
     public function getTransactionGatewayCreateLink()
     {
@@ -248,6 +249,6 @@ class PayModel extends Model
      */
     public function getTransactionGatewayNotifyLink()
     {
-        return Url::toInternal(['/payment/default/notify', 'lpToken' => $this->getAuthToken(), 'lpKey' => $this->randomKey, 'time' => microtime(true)], true);
+        return Url::toInternal(['/payment/default/notify', 'lpToken' => $this->getAuthToken(), 'lpKey' => $this->randomKey, 'time' => time()], true);
     }
 }

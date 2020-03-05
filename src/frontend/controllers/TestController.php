@@ -2,11 +2,10 @@
 
 namespace luya\payment\frontend\controllers;
 
+use app\helpers\CorsCustom;
+use luya\admin\models\Config;
+use luya\order\models\Item;
 use Yii;
-use luya\helpers\Url;
-use luya\payment\PaymentProcess;
-use luya\payment\transactions\SaferPayTransaction;
-use luya\payment\transactions\PayPalTransaction;
 use luya\payment\Pay;
 use yii\filters\HttpCache;
 use luya\payment\PaymentException;
@@ -19,7 +18,12 @@ class TestController extends \luya\web\Controller
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-        
+
+        // add CORS filter
+        $behaviors['corsFilter'] = [
+            'class' => CorsCustom::class
+        ];
+
         $behaviors[] = [
             'class' => HttpCache::class,
             'cacheControlHeader' => 'no-store, no-cache',
@@ -27,63 +31,69 @@ class TestController extends \luya\web\Controller
                 return time();
             },
         ];
-        
+
         return $behaviors;
     }
 
     public function beforeAction($action)
     {
-        if (parent::beforeAction($action)) {
+	    $this->enableCsrfValidation = false;
+	    if (parent::beforeAction($action)) {
             if (YII_ENV_DEV && YII_DEBUG) {
                 return true;
             }
         }
+	    return false;
 
-        return false;
     }
 
-    public function actionIndex()
+    /**
+     * @return \yii\web\Response
+     * @throws PaymentException
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function actionIndex() //todo test payment
     {
-        Yii::$app->session->remove('storeTransactionId');
+        if(isset(Yii::$app->request->post()["orderId"])) {
+            $order = Item::findOne(Yii::$app->request->post()["orderId"]);
+            $pay = new Pay();
+            $pay->setOrderId($order->id);
+            $pay->setCurrency('PLN');
+            $pay->setSuccessLink(['success', 'orderId' => $order->id]);
+            $pay->setErrorLink(['error']);
+            $pay->setAbortLink(['abort']);
 
-        $process = new Pay();
-        $process->setOrderId('order-'.uniqid());
-        $process->setCurrency('CHF');
-        $process->setSuccessLink(['/payment/test/test-success']);
-        $process->setErrorLink(['/payment/test/test-error']);
-        $process->setAbortLink(['/payment/test/test-abort']);
-        $process->addItem('Product 1', 1, 200);
-        $process->addItem('Product 2', 2, 400);
-        $process->setTotalAmount(1000);
+            foreach ($order->articles as $article) {
+                $pay->addItem($article->article->name, $article->amount, $article->price);
+            }
+            if($order->shipping->price > 0) {
+                $pay->addShipping($order->shipping->api->name, $order->shipping->price);
+            }
+            $pay->setTotalAmount($order->total_price);
 
-        // prepare the order and store the process->getId()
-        // ....
-
-        Yii::$app->session->set('storeTransactionId', $process->getId());
-
-        return $process->dispatch($this);
-    }
-    
-    public function actionTestSuccess()
-    {
-        if (!Pay::isSuccess(Yii::$app->session->get('storeTransactionId', 0))) {
-            throw new PaymentException("Error, invalid success payment process.");
+            return $pay->dispatch($this);
         }
 
-        // create order for customer ...
-        // ...
-
-
-        return 'success!';
+        throw new PaymentException("Error, invalid payment process.");
     }
     
-    public function actionTestError()
+    public function actionSuccess($orderId)
     {
-        return 'Rendering: error action...';
+        $order = Item::findOne($orderId);
+        if (!Pay::isSuccess($order->lastPayment->id)) {
+            throw new \Exception("The request url is invalid, the payment process was not closed successfull.");
+        }
+
+        return $this->redirect(Config::get('app_url') . '/account/order-history');
     }
     
-    public function actionTestAbort()
+    public function actionError($orderId)
     {
-        return 'Rendering: abort action...';
+        return $this->redirect(Config::get('app_url') . '/account/order-history');
+    }
+    
+    public function actionAbort($orderId)
+    {
+        return $this->redirect(Config::get('app_url') . '/account/order-history');
     }
 }
