@@ -2,6 +2,7 @@
 
 namespace luya\payment\frontend\controllers;
 
+use app\helpers\CorsCustom;
 use luya\payment\PaymentProcess;
 use luya\payment\Pay;
 use luya\payment\base\PayModel;
@@ -18,13 +19,19 @@ use yii\filters\HttpCache;
  */
 class DefaultController extends \luya\web\Controller
 {
+
     /**
      * Disable cache
      */
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-        
+
+        // add CORS filter
+        $behaviors['corsFilter'] = [
+            'class' => CorsCustom::class
+        ];
+
         $behaviors[] = [
             'class' => HttpCache::class,
             'cacheControlHeader' => 'no-store, no-cache',
@@ -32,9 +39,14 @@ class DefaultController extends \luya\web\Controller
                 return time();
             },
         ];
-        
+
         return $behaviors;
     }
+
+	public function beforeAction($action) {
+		$this->enableCsrfValidation = false;
+		return parent::beforeAction($action);
+	}
 
     /**
      * Undocumented function
@@ -82,20 +94,17 @@ class DefaultController extends \luya\web\Controller
     {
         $integrator = $this->module->getIntegrator();
         $model = $integrator->findByKey($lpKey, $lpToken);
-        $integrator->addTrace($model, __METHOD__);
+        $integrator->addTrace($model, "Create payment");
 
         $state = $this->ensureModelState($model);
         if ($state !== false) {
             return $state;
         }
 
-        
-        
         $this->module->transaction->setIntegrator($integrator);
         $this->module->transaction->setModel($model);
         $this->module->transaction->setContext($this);
-        
-        
+
         return $this->module->transaction->create();
     }
     
@@ -110,7 +119,7 @@ class DefaultController extends \luya\web\Controller
     {
         $integrator = $this->module->getIntegrator();
         $model = $integrator->findByKey($lpKey, $lpToken);
-        $integrator->addTrace($model, __METHOD__);
+        $integrator->addTrace($model, "Back from payment");
 
         $state = $this->ensureModelState($model);
         if ($state !== false) {
@@ -137,7 +146,7 @@ class DefaultController extends \luya\web\Controller
     {
         $integrator = $this->module->getIntegrator();
         $model = $integrator->findByKey($lpKey, $lpToken);
-        $integrator->addTrace($model, __METHOD__);
+        $integrator->addTrace($model, "Payment Fail");
 
         $state = $this->ensureModelState($model);
         if ($state !== false) {
@@ -162,7 +171,7 @@ class DefaultController extends \luya\web\Controller
     {
         $integrator = $this->module->getIntegrator();
         $model = $integrator->findByKey($lpKey, $lpToken);
-        $integrator->addTrace($model, __METHOD__);
+        $integrator->addTrace($model, "Payment Abort");
         
         $state = $this->ensureModelState($model);
         if ($state !== false) {
@@ -189,7 +198,7 @@ class DefaultController extends \luya\web\Controller
     {
         $integrator = $this->module->getIntegrator();
         $model = $integrator->findByKey($lpKey, $lpToken);
-        $integrator->addTrace($model, __METHOD__);
+        $integrator->addTrace($model, "Payment Notify");
         
         $state = $this->ensureModelState($model);
         if ($state !== false) {
