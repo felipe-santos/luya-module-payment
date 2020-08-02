@@ -47,6 +47,7 @@ class Pay
      * The 3-letter ISO 4217 currency code.
      *
      * @param string $currency
+     * @throws InvalidConfigException
      */
     public function setCurrency($currency)
     {
@@ -88,6 +89,7 @@ class Pay
      * @param string $name The name of the product item.
      * @param integer $qty The number of items.
      * @param integer $amount The price in smallest unit for **1 item** not total price.
+     * @throws PaymentException
      */
     public function addItem($name, $qty, $amount)
     {
@@ -99,6 +101,7 @@ class Pay
      *
      * @param string $name The name of the shipping product like "International Shipping"
      * @param string $amount
+     * @throws PaymentException
      */
     public function addShipping($name, $amount)
     {
@@ -110,6 +113,7 @@ class Pay
      *
      * @param string $name
      * @param integer $amount
+     * @throws PaymentException
      */
     public function addTax($name, $amount)
     {
@@ -148,7 +152,7 @@ class Pay
             $amount += $item->getTotalAmount();
         }
 
-        if ($this->_totalAmount !== $amount) {
+        if ($this->_totalAmount !== floatval($amount)) {
             throw new PaymentException("The amount provided trough items,shipping & tax ({$amount}) must be equal the provided totalAmount ({$this->_totalAmount}).");
         }
 

@@ -50,7 +50,7 @@ class ProcessItem extends NgRestModel
             'process_id' => Yii::t('app', 'Process ID'),
             'name' => Yii::t('app', 'Name'),
             'qty' => Yii::t('app', 'Qty'),
-            'amount' => Yii::t('app', 'Amount'),
+            'amount' => Yii::t('app', 'Cod'),
         ];
     }
 
